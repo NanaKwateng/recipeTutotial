@@ -7,6 +7,11 @@ import { db } from './config/db.js';
 import { favoritesTable } from './db/schema.js';
 import { and, eq } from 'drizzle-orm';
 
+import job from './config/cron.js';
+import { env } from './config/env.js';
+
+//Starting the cron job
+if (env.NODE_ENV === 'production') job.start();
 const app = express();
 const PORT = process.env.PORT || 8001
 app.use(express.json());
@@ -52,6 +57,18 @@ app.delete('/api/favorites/:userId/:recipeId', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error removing favorite', message: 'Internal server error' });
+  }
+});
+
+//Get all favorite recipes for a user
+app.get('/api/favorites/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userFavorites = await db.select().from(favoritesTable).where(eq(favoritesTable.userId, userId));
+    res.status(200).json(favorites);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error getting favorites', message: 'Internal server error' });
   }
 });
 
